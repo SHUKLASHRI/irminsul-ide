@@ -5,7 +5,7 @@ export const cytoscapeTheme: any[] = [
     style: {
       'label': 'data(name)',
       'color': '#f8fafc',
-      'font-family': 'Inter, sans-serif',
+      'font-family': "Consolas, 'Courier New', monospace",
       'font-size': 12,
       'font-weight': 600,
       'text-valign': 'center',

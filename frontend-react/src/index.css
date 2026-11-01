@@ -1,8 +1,13 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Segoe UI", -apple-system, BlinkMacSystemFont, "Segoe UI Variable", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "Cascadia Code", "Cascadia Mono", Consolas, "Courier New", monospace;
+  --font-sans: Consolas, "Courier New", monospace;
+  --font-mono: Consolas, "Courier New", monospace;
+}
+
+/* Enforce Consolas across every element in Irminsul IDE */
+*, *::before, *::after, html, body, input, button, textarea, select, kbd, pre, code {
+  font-family: Consolas, "Courier New", monospace !important;
 }
 
 /* ==========================================================================
@@ -46,7 +51,7 @@
 html, body {
   background-color: var(--vscode-editor-bg);
   color: var(--vscode-fg);
-  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Segoe UI Variable", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: Consolas, "Courier New", monospace !important;
   margin: 0;
   padding: 0;
   height: 100%;
