@@ -15,6 +15,11 @@ import {
   LayoutGrid,
   LayoutList,
   FileText,
+  Sparkles,
+  Clock,
+  Layers,
+  ShieldCheck,
+  Cpu,
 } from 'lucide-react';
 import { IrminsulLogo } from './IrminsulLogo';
 import { promptNativeFolderChooser } from '../utils/nativeDialog';
@@ -329,6 +334,7 @@ export const HeroCanvas: React.FC = () => {
     error,
     loadProject,
     projectPath,
+    recentProjects,
   } = useExplorer();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -836,24 +842,151 @@ export const HeroCanvas: React.FC = () => {
               </button>
             </div>
           ) : (
-            <div className="bg-[#252526] border border-[#3e3e42] rounded-[4px] p-8 shadow-2xl max-w-sm flex flex-col items-center gap-3">
-              <IrminsulLogo className="w-12 h-12 mb-1 filter drop-shadow-[0_0_12px_rgba(0,122,204,0.3)]" />
-              <div className="text-sm font-semibold text-[#ffffff]">Irminsul IDE</div>
-              <p className="text-xs text-[#858585] leading-relaxed text-center">
-                {projectPath
-                  ? 'No Python source files found in this workspace folder. Open another folder or create a Python module.'
-                  : 'No project open. Open a Python project folder to visualize its architecture and refactor code.'}
-              </p>
-              <button
-                onClick={async () => {
-                  const chosen = await promptNativeFolderChooser(projectPath);
-                  if (chosen) loadProject(chosen);
-                }}
-                className="mt-2 bg-[#007acc] hover:bg-[#0098ff] text-[#ffffff] font-medium px-4 py-2 rounded-[3px] text-xs transition-colors flex items-center gap-2 shadow"
-              >
-                <FolderOpen size={14} />
-                <span>Open Folder...</span>
-              </button>
+            <div className="bg-[#1f242c]/95 backdrop-blur-md border border-[#30363d] rounded-xl p-8 shadow-[0_20px_60px_rgba(0,0,0,0.7)] max-w-2xl w-full flex flex-col gap-6 text-left border-t-[#007acc]/40">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-[#30363d] pb-5">
+                <div className="flex items-center gap-3.5">
+                  <IrminsulLogo className="w-10 h-10 filter drop-shadow-[0_0_12px_rgba(0,122,204,0.4)]" />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-base font-bold text-[#ffffff] tracking-tight">Irminsul IDE</span>
+                      <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-[#007acc]/20 text-[#58a6ff] border border-[#007acc]/30">v1.0.0</span>
+                    </div>
+                    <div className="text-[11px] text-[#8b949e] mt-0.5">Python Architecture &amp; Refactor Workbench</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#161b22] border border-[#30363d] text-[10px] text-[#4ec9b0] font-mono font-semibold">
+                  <ShieldCheck size={13} />
+                  <span>100% Offline &bull; Safe AST</span>
+                </div>
+              </div>
+
+              {projectPath && (
+                <div className="bg-[#2a2415] border border-[#cca700]/30 rounded-lg p-3 flex items-center justify-between text-xs text-[#cca700]">
+                  <div className="flex items-center gap-2 truncate">
+                    <AlertCircle size={15} className="flex-shrink-0" />
+                    <span className="truncate">No Python (.py) files found in <code className="bg-[#1e1e1e] px-1.5 py-0.5 rounded text-[#ffffff]">{projectPath}</code></span>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      const chosen = await promptNativeFolderChooser(projectPath);
+                      if (chosen) loadProject(chosen);
+                    }}
+                    className="ml-3 px-2 py-1 bg-[#cca700] hover:bg-[#e0b700] text-[#121212] font-semibold rounded text-[11px] flex-shrink-0"
+                  >
+                    Change Folder
+                  </button>
+                </div>
+              )}
+
+              {/* Two-Column Hub */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left Column: Actions & Workspaces */}
+                <div className="flex flex-col gap-3">
+                  <div className="text-[11px] font-semibold text-[#8b949e] uppercase tracking-wider">Start &amp; Workspaces</div>
+                  
+                  <button
+                    onClick={async () => {
+                      const chosen = await promptNativeFolderChooser(projectPath);
+                      if (chosen) loadProject(chosen);
+                    }}
+                    className="group w-full p-3 bg-gradient-to-r from-[#007acc] to-[#0098ff] hover:from-[#0088e0] hover:to-[#1aa3ff] text-[#ffffff] rounded-lg text-xs font-semibold flex items-center justify-between shadow-[0_4px_16px_rgba(0,122,204,0.35)] transition-all hover:translate-y-[-1px]"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <FolderOpen size={16} />
+                      <span>Open Project Folder...</span>
+                    </div>
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/25 text-white/90">Ctrl+O</span>
+                  </button>
+
+                  <button
+                    onClick={() => loadProject('sample_project')}
+                    className="w-full p-3 bg-[#161b22] hover:bg-[#21262d] border border-[#30363d] hover:border-[#58a6ff] text-[#c9d1d9] hover:text-[#ffffff] rounded-lg text-xs font-medium flex items-center justify-between transition-all"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Sparkles size={16} className="text-[#cca700]" />
+                      <div className="text-left">
+                        <div className="font-semibold text-[#ffffff]">Explore Demo Architecture</div>
+                        <div className="text-[10px] text-[#8b949e]">Instant multi-tier graph &amp; cycle audit</div>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-[#cca700]/20 text-[#cca700] border border-[#cca700]/30">Demo</span>
+                  </button>
+
+                  {recentProjects && recentProjects.length > 0 && (
+                    <div className="mt-2 flex flex-col gap-1.5">
+                      <div className="text-[10px] font-semibold text-[#6e7681] uppercase tracking-wider flex items-center gap-1.5">
+                        <Clock size={11} />
+                        <span>Recent Workspaces</span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        {recentProjects.slice(0, 3).map((p) => (
+                          <button
+                            key={p.path}
+                            onClick={() => loadProject(p.path)}
+                            className="w-full px-2.5 py-1.5 bg-[#161b22]/70 hover:bg-[#21262d] border border-[#30363d]/50 hover:border-[#58a6ff]/50 rounded text-left flex items-center justify-between group transition-colors"
+                          >
+                            <span className="truncate text-[11px] text-[#c9d1d9] group-hover:text-[#58a6ff]">{p.name}</span>
+                            <span className="text-[9px] text-[#6e7681] font-mono flex-shrink-0">{p.lastOpened}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right Column: Key Shortcuts & Superpowers */}
+                <div className="flex flex-col gap-3">
+                  <div className="text-[11px] font-semibold text-[#8b949e] uppercase tracking-wider">Keyboard Shortcuts</div>
+                  <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-3 flex flex-col gap-2 text-[11px]">
+                    <div className="flex items-center justify-between text-[#c9d1d9]">
+                      <span>Find Symbol / Quick Open</span>
+                      <kbd className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d]">Ctrl+P</kbd>
+                    </div>
+                    <div className="flex items-center justify-between text-[#c9d1d9]">
+                      <span>Safe Multi-File AST Rename</span>
+                      <kbd className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d]">F2</kbd>
+                    </div>
+                    <div className="flex items-center justify-between text-[#c9d1d9]">
+                      <span>Full Architecture Re-Analyze</span>
+                      <kbd className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d]">F5</kbd>
+                    </div>
+                    <div className="flex items-center justify-between text-[#c9d1d9]">
+                      <span>Next Circular Import Cycle</span>
+                      <kbd className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d]">F8</kbd>
+                    </div>
+                    <div className="flex items-center justify-between text-[#c9d1d9]">
+                      <span>Integrated Terminal &amp; Tests</span>
+                      <kbd className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] border border-[#30363d]">Ctrl+`</kbd>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    <div className="p-2 rounded bg-[#161b22] border border-[#30363d] flex items-center gap-2 text-[10px] text-[#8b949e]">
+                      <Layers size={13} className="text-[#007acc]" />
+                      <span>AST Topology</span>
+                    </div>
+                    <div className="p-2 rounded bg-[#161b22] border border-[#30363d] flex items-center gap-2 text-[10px] text-[#8b949e]">
+                      <RotateCcw size={13} className="text-[#cca700]" />
+                      <span>Tarjan SCC Cycles</span>
+                    </div>
+                    <div className="p-2 rounded bg-[#161b22] border border-[#30363d] flex items-center gap-2 text-[10px] text-[#8b949e]">
+                      <ShieldCheck size={13} className="text-[#4ec9b0]" />
+                      <span>Atomic Refactor</span>
+                    </div>
+                    <div className="p-2 rounded bg-[#161b22] border border-[#30363d] flex items-center gap-2 text-[10px] text-[#8b949e]">
+                      <Cpu size={13} className="text-[#f85149]" />
+                      <span>McCabe Heatmaps</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-[#30363d] pt-3 flex items-center justify-between text-[10px] text-[#8b949e]">
+                <span>Created &amp; Owned by Shrinath Shukla</span>
+                <span>Stand-Alone Desktop Workbench</span>
+              </div>
             </div>
           )}
         </div>

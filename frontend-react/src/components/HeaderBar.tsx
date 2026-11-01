@@ -239,6 +239,20 @@ export const HeaderBar: React.FC = () => {
                 <span className="text-[10px] text-[#858585] font-mono">Ctrl+O</span>
               </button>
 
+              <button
+                onClick={() => {
+                  loadProject('sample_project');
+                  setActiveMenu(null);
+                }}
+                className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-[#094771] hover:text-[#ffffff] text-left"
+              >
+                <div className="flex items-center gap-2">
+                  <Sparkles size={13} className="text-[#cca700]" />
+                  <span>Explore Demo Architecture</span>
+                </div>
+                <span className="text-[10px] text-[#858585] font-mono">Demo</span>
+              </button>
+
               {projectPath ? (
                 <button
                   onClick={() => {
