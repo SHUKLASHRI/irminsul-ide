@@ -122,7 +122,7 @@ export const SafeRenameModal: React.FC = () => {
 
         {/* Body */}
         <div className="p-4 overflow-y-auto space-y-3.5 code-scroll flex-1">
-          {/* New Name Input Row */}
+          {/* Input */}
           <div>
             <label className="block text-[11px] font-sans text-[#858585] mb-1">
               New Symbol Name
@@ -156,7 +156,7 @@ export const SafeRenameModal: React.FC = () => {
             </div>
           </div>
 
-          {/* Error Banner */}
+          {/* Error */}
           {error && (
             <div className="flex items-center gap-2 p-2.5 rounded-[2px] bg-[#332020] border border-[#f14c4c]/40 text-[#f14c4c] text-xs">
               <AlertTriangle size={14} className="text-[#f14c4c] flex-shrink-0" />
@@ -164,7 +164,7 @@ export const SafeRenameModal: React.FC = () => {
             </div>
           )}
 
-          {/* Success Banner */}
+          {/* Success */}
           {successMessage && (
             <div className="flex items-center gap-2 p-2.5 rounded-[2px] bg-[#203330] border border-[#4ec9b0]/40 text-[#4ec9b0] text-xs">
               <CheckCircle2 size={14} className="text-[#4ec9b0] flex-shrink-0" />
@@ -172,7 +172,7 @@ export const SafeRenameModal: React.FC = () => {
             </div>
           )}
 
-          {/* Diff Preview List */}
+          {/* Diff */}
           {plan && (
             <div className="space-y-2 pt-1">
               <div className="flex items-center justify-between text-xs font-mono">
@@ -210,7 +210,7 @@ export const SafeRenameModal: React.FC = () => {
           )}
         </div>
 
-        {/* Footer Actions */}
+        {/* Actions */}
         <div className="px-4 py-2.5 border-t border-[#3e3e42] bg-[#2d2d2d] flex items-center justify-between">
           <button
             onClick={closeRenameModal}

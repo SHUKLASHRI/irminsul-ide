@@ -1,55 +1,45 @@
-"""
-main.py - Desktop entry point for Irminsul IDE.
-
-Starts the Flask API in a background daemon thread, then opens a native
-OS window via pywebview pointing at the local server. The user sees a
-normal desktop application window - no browser chrome, no address bar.
-"""
-
+import os
+import sys
 import threading
 import time
-import sys
-import os
+import webview
 
-# Fix Windows cp1252 / pythonw GUI encoding issues
+# Encoding
 if sys.stdout is not None:
     try:
-        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
         pass
 else:
-    sys.stdout = open(os.devnull, 'w', encoding='utf-8', errors='replace')
+    sys.stdout = open(os.devnull, "w", encoding="utf-8", errors="replace")
 
 if sys.stderr is not None:
     try:
-        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
         pass
 else:
-    sys.stderr = open(os.devnull, 'w', encoding='utf-8', errors='replace')
+    sys.stderr = open(os.devnull, "w", encoding="utf-8", errors="replace")
 
-# When running as a PyInstaller bundle, resource paths need adjustment
+
+# Resource path
 def resource_path(relative: str) -> str:
-    """Get absolute path to a resource - works for dev and PyInstaller .exe."""
-    if hasattr(sys, '_MEIPASS'):
-        base = sys._MEIPASS
-    else:
-        base = os.path.dirname(os.path.abspath(__file__))
+    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base, relative)
 
-# Ensure backend is importable
+
 sys.path.insert(0, resource_path("."))
 
-import webview
 from app import app as flask_app
 
+
+# Port search
 def find_available_port(preferred_port: int = 5173) -> int:
-    """Find an available TCP port starting from preferred_port."""
     import socket
     for p in range(preferred_port, preferred_port + 30):
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.bind(('127.0.0.1', p))
+                s.bind(("127.0.0.1", p))
                 return p
         except OSError:
             continue
@@ -57,15 +47,12 @@ def find_available_port(preferred_port: int = 5173) -> int:
 
 
 PORT = find_available_port(5173)
-_flask_ready = threading.Event()
 
 
+# Server thread
 def _run_flask():
-    """Run Flask in a background daemon thread."""
     import logging
-    log = logging.getLogger('werkzeug')
-    log.setLevel(logging.ERROR)
-
+    logging.getLogger("werkzeug").setLevel(logging.ERROR)
     flask_app.run(
         host="127.0.0.1",
         port=PORT,
@@ -74,8 +61,8 @@ def _run_flask():
     )
 
 
-def _wait_for_flask(timeout=10.0):
-    """Poll until Flask is accepting connections or timeout."""
+# Readiness check
+def _wait_for_flask(timeout: float = 10.0) -> bool:
     import socket
     deadline = time.time() + timeout
     while time.time() < deadline:
@@ -88,11 +75,10 @@ def _wait_for_flask(timeout=10.0):
 
 
 if __name__ == "__main__":
-    # Start Flask
     flask_thread = threading.Thread(target=_run_flask, daemon=True)
     flask_thread.start()
 
-    # Pre-warm AST cache concurrently so app opens instantaneously
+    # Pre-warm cache
     def _prewarm():
         try:
             from app import _get_result, _resolve_project_path
@@ -103,36 +89,30 @@ if __name__ == "__main__":
 
     threading.Thread(target=_prewarm, daemon=True).start()
 
-    # Wait for it to be ready
     if not _wait_for_flask():
         print(f"ERROR: Flask server did not start on port {PORT} in time.", file=sys.stderr)
         sys.exit(1)
 
     print(f"Irminsul IDE -> http://127.0.0.1:{PORT}")
 
+    # Desktop API
     class DesktopApi:
         def open_folder_dialog(self):
-            """Open native OS folder chooser dialog and return path."""
             result = window.create_file_dialog(webview.FOLDER_DIALOG)
-            if result and len(result) > 0:
-                return result[0]
-            return None
+            return result[0] if result and len(result) > 0 else None
 
         def choose_folder(self):
-            """Alias for open_folder_dialog."""
             return self.open_folder_dialog()
 
         def minimize_window(self):
-            """Minimize the native desktop window."""
             try:
                 window.minimize()
             except Exception:
                 pass
 
         def toggle_maximize_window(self):
-            """Toggle maximize/restore for desktop window."""
             try:
-                if getattr(window, 'maximized', False):
+                if getattr(window, "maximized", False):
                     window.restore()
                 else:
                     window.maximize()
@@ -140,7 +120,6 @@ if __name__ == "__main__":
                 pass
 
         def close_window(self):
-            """Close/exit desktop application."""
             try:
                 window.destroy()
             except Exception:
@@ -148,7 +127,7 @@ if __name__ == "__main__":
 
     api = DesktopApi()
 
-    # Open native window (like Figma / VS Code desktop)
+    # Window creation
     window = webview.create_window(
         title="Irminsul IDE",
         url=f"http://127.0.0.1:{PORT}",
@@ -163,19 +142,19 @@ if __name__ == "__main__":
     icon_path = resource_path("icon.ico")
     icon_arg = icon_path if os.path.isfile(icon_path) else None
 
-    # On Windows, register AppUserModelID for crisp taskbar and window icon
+    # Windows taskbar
     try:
         import ctypes
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("shuklashri.irminsulide.1.0")
     except Exception:
         pass
 
+    # Windows icon
     def apply_native_icon():
-        if os.name != 'nt' or not icon_arg:
+        if os.name != "nt" or not icon_arg:
             return
         try:
             import ctypes
-            import time
             time.sleep(0.1)
             WM_SETICON = 0x0080
             ICON_SMALL = 0
@@ -184,7 +163,7 @@ if __name__ == "__main__":
             IMAGE_ICON = 1
 
             hwnd = None
-            if hasattr(window, 'native') and window.native:
+            if hasattr(window, "native") and window.native:
                 try:
                     hwnd = int(window.native.Handle.ToInt64())
                 except Exception:
@@ -204,22 +183,19 @@ if __name__ == "__main__":
 
     window.events.shown += apply_native_icon
 
+    # Start webview
     if sys.platform == "win32":
         try:
-            # Prefer modern Edge Chromium engine on Windows for maximum 120 FPS performance
-            webview.start(apply_native_icon, gui='edgechromium', debug=False, icon=icon_arg)
+            webview.start(apply_native_icon, gui="edgechromium", debug=False, icon=icon_arg)
         except Exception:
             webview.start(apply_native_icon, debug=False, icon=icon_arg)
     elif sys.platform == "darwin":
-        # Native Cocoa WKWebView on macOS
         webview.start(debug=False)
     else:
-        # Linux (WebKitGTK)
         try:
-            webview.start(debug=False, gui='gtk')
+            webview.start(debug=False, gui="gtk")
         except Exception:
             try:
-                webview.start(debug=False, gui='qt')
+                webview.start(debug=False, gui="qt")
             except Exception:
                 webview.start(debug=False)
-

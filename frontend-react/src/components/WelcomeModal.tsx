@@ -81,7 +81,7 @@ export const WelcomeModal: React.FC = () => {
         className="w-[960px] max-w-[95vw] h-[640px] max-h-[92vh] bg-[#1e1e1e] border border-[#3e3e42] rounded-md shadow-2xl flex flex-col overflow-hidden text-[#cccccc]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Title Bar */}
+        {/* Title */}
         <div className="h-10 bg-[#252526] border-b border-[#3e3e42] px-4 flex items-center justify-between select-none">
           <div className="flex items-center gap-2">
             <IrminsulLogo className="w-5 h-5" />
@@ -98,9 +98,9 @@ export const WelcomeModal: React.FC = () => {
           </button>
         </div>
 
-        {/* Main Body */}
+        {/* Body */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Left Column: Start & Recent */}
+          {/* Sidebar */}
           <div className="w-[340px] border-r border-[#3e3e42] p-6 flex flex-col justify-between overflow-y-auto bg-[#1e1e1e]">
             <div className="space-y-6">
               <div>
@@ -112,7 +112,7 @@ export const WelcomeModal: React.FC = () => {
                 </p>
               </div>
 
-              {/* Start Actions */}
+              {/* Start */}
               <div className="space-y-2">
                 <div className="text-[11px] font-semibold text-[#858585] uppercase tracking-wider mb-2">
                   Start
@@ -170,7 +170,7 @@ export const WelcomeModal: React.FC = () => {
                 </button>
               </div>
 
-              {/* Recent Projects */}
+              {/* Recent */}
               <div>
                 <div className="text-[11px] font-semibold text-[#858585] uppercase tracking-wider mb-2">
                   Recent Projects
@@ -204,7 +204,7 @@ export const WelcomeModal: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column: Interactive "How Everything Works" Walkthrough */}
+          {/* Guide */}
           <div className="flex-1 p-6 flex flex-col bg-[#252526]/50 overflow-y-auto">
             <div className="mb-4">
               <div className="text-xs font-semibold text-[#007acc] uppercase tracking-wider mb-1">
@@ -216,7 +216,7 @@ export const WelcomeModal: React.FC = () => {
               </p>
             </div>
 
-            {/* Guide Step Pills */}
+            {/* Steps */}
             <div className="grid grid-cols-3 gap-2 mb-6">
               {guides.map((g, idx) => (
                 <button
@@ -234,7 +234,7 @@ export const WelcomeModal: React.FC = () => {
               ))}
             </div>
 
-            {/* Active Guide Card Detail */}
+            {/* Detail */}
             <div className="flex-1 bg-[#1e1e1e] border border-[#3e3e42] rounded-lg p-6 flex flex-col justify-between shadow-xl">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -255,7 +255,7 @@ export const WelcomeModal: React.FC = () => {
                 </div>
               </div>
 
-              {/* Navigation Controls */}
+              {/* Navigation */}
               <div className="pt-6 border-t border-[#333333] flex items-center justify-between">
                 <button
                   disabled={activeGuideIndex === 0}

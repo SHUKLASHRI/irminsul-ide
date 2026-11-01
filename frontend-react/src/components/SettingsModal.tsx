@@ -55,7 +55,7 @@ export const SettingsModal: React.FC = () => {
           </div>
         </div>
 
-        {/* Search bar */}
+        {/* Search */}
         <div className="p-3 bg-[#1e1e1e] border-b border-[#3e3e42]">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-2.5 text-[#858585]" />
@@ -69,9 +69,9 @@ export const SettingsModal: React.FC = () => {
           </div>
         </div>
 
-        {/* Content Area */}
+        {/* Content */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Left Categories */}
+          {/* Categories */}
           <div className="w-52 border-r border-[#3e3e42] bg-[#1e1e1e]/60 py-2 flex flex-col gap-0.5 select-none text-xs">
             <button
               onClick={() => setActiveCategory('editor')}
@@ -134,7 +134,7 @@ export const SettingsModal: React.FC = () => {
             </button>
           </div>
 
-          {/* Right Settings Body */}
+          {/* Settings */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6 text-xs">
             {activeCategory === 'editor' && (
               <div className="space-y-6">

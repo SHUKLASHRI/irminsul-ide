@@ -33,7 +33,7 @@ export const ProjectSidebar: React.FC = () => {
 
   const [treeFilter, setTreeFilter] = useState('');
 
-  // Extract folder name from projectPath or projectMeta
+  // Project name
   const projectName = useMemo(() => {
     if (projectMeta?.name) return projectMeta.name;
     if (!projectPath) return 'Project';
@@ -41,7 +41,7 @@ export const ProjectSidebar: React.FC = () => {
     return parts[parts.length - 1] || 'Project';
   }, [projectPath, projectMeta]);
 
-  // Group nodes by file
+  // File groups
   const fileGroups = useMemo(() => {
     const map = new Map<string, typeof nodes>();
     nodes.forEach((n) => {
@@ -75,7 +75,7 @@ export const ProjectSidebar: React.FC = () => {
     return null;
   }
 
-  // EXPANDED STATE: VS Code Primary Sidebar
+  // Sidebar
   return (
     <aside
       style={{ width: `${sidebarWidth}px` }}

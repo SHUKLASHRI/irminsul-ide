@@ -1,9 +1,3 @@
-"""AST-based Python repository architecture mapper.
-
-Extracts module hierarchy, symbols (classes, functions, methods), cyclomatic complexity,
-import-aware call graph resolution, architectural layers, and code metrics.
-"""
-
 from __future__ import annotations
 
 import ast
@@ -20,8 +14,8 @@ IGNORED_DIRS = frozenset({
 })
 
 
+# Complexity
 def calculate_complexity(node: ast.AST) -> int:
-    """Calculate cyclomatic complexity (McCabe metric) from AST branch points."""
     complexity = 1
     for child in ast.walk(node):
         if isinstance(child, (ast.If, ast.IfExp, ast.For, ast.AsyncFor, ast.While, ast.ExceptHandler, ast.With, ast.AsyncWith, ast.Assert)):
@@ -34,8 +28,8 @@ def calculate_complexity(node: ast.AST) -> int:
     return complexity
 
 
+# Formatting
 def format_type_annotation(node: Optional[ast.AST]) -> Optional[str]:
-    """Convert AST type annotation node to human-readable string."""
     if node is None:
         return None
     try:
@@ -52,7 +46,6 @@ def format_type_annotation(node: Optional[ast.AST]) -> Optional[str]:
 
 
 def format_decorator(node: ast.AST) -> str:
-    """Format decorator AST into readable string."""
     try:
         return f"@{ast.unparse(node)}"
     except Exception:
@@ -67,9 +60,8 @@ def format_decorator(node: ast.AST) -> str:
         return "@decorator"
 
 
+# Visitor
 class ModuleASTVisitor(ast.NodeVisitor):
-    """Visits a single Python file's AST to extract symbols, imports, and calls."""
-
     def __init__(self, filepath: str, rel_path: str):
         self.filepath = os.path.abspath(filepath)
         self.rel_path = rel_path.replace("\\", "/")
@@ -89,10 +81,12 @@ class ModuleASTVisitor(ast.NodeVisitor):
         self._class_stack: list[str] = []
         self._function_stack: list[str] = []
 
+    # Module
     def visit_Module(self, node: ast.Module):
         self.docstring = ast.get_docstring(node)
         self.generic_visit(node)
 
+    # Entrypoint check
     def visit_If(self, node: ast.If):
         try:
             test_str = ast.unparse(node.test)
@@ -102,6 +96,7 @@ class ModuleASTVisitor(ast.NodeVisitor):
             pass
         self.generic_visit(node)
 
+    # Imports
     def visit_Import(self, node: ast.Import):
         for alias in node.names:
             self.imports.append({
@@ -127,6 +122,7 @@ class ModuleASTVisitor(ast.NodeVisitor):
                 "line": node.lineno,
             })
 
+    # Constants
     def visit_Assign(self, node: ast.Assign):
         if not self._class_stack and not self._function_stack:
             for target in node.targets:
@@ -153,6 +149,7 @@ class ModuleASTVisitor(ast.NodeVisitor):
                 })
         self.generic_visit(node)
 
+    # Classes
     def visit_ClassDef(self, node: ast.ClassDef):
         bases: list[str] = []
         for b in node.bases:
@@ -200,6 +197,7 @@ class ModuleASTVisitor(ast.NodeVisitor):
         self.generic_visit(node)
         self._class_stack.pop()
 
+    # Functions
     def _visit_func_def(self, node: ast.FunctionDef | ast.AsyncFunctionDef, is_async: bool):
         class_owner = self._class_stack[-1] if self._class_stack else None
         docstring = ast.get_docstring(node)
@@ -306,6 +304,7 @@ class ModuleASTVisitor(ast.NodeVisitor):
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef):
         self._visit_func_def(node, is_async=True)
 
+    # Calls
     def visit_Call(self, node: ast.Call):
         caller_id = self._function_stack[-1] if self._function_stack else None
         callee_name = None
@@ -336,17 +335,16 @@ class ModuleASTVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
 
+# Architecture mapper
 class ProjectArchitectureMapper:
-    """Scans Python projects to build dependency graphs, layers, and diagnostic metrics."""
-
     def __init__(self, root_path: str):
         self.root_path = os.path.abspath(root_path)
         self.project_name = os.path.basename(self.root_path) or "Python Project"
         self.parsed_modules: dict[str, ModuleASTVisitor] = {}
         self.G: nx.DiGraph = nx.DiGraph()
 
+    # Scan & parse
     def scan_and_parse(self) -> dict[str, Any]:
-        """Parse all Python files under root_path."""
         total_files = 0
         total_lines = 0
         total_code_lines = 0
@@ -393,15 +391,14 @@ class ProjectArchitectureMapper:
             "packages": sorted(list(packages)),
         }
 
+    # Graph construction
     def build_architecture_graph(self) -> dict[str, Any]:
-        """Construct NetworkX graph with resolved calls, instantiations, and inheritance."""
         G = nx.DiGraph()
-
         symbol_index: dict[str, dict[str, Any]] = {}
         class_by_name: dict[str, list[str]] = {}
         all_classes: dict[str, dict[str, Any]] = {}
 
-        # 1. Register class nodes
+        # Class nodes
         for mod in self.parsed_modules.values():
             for cls in mod.classes:
                 cls_id = cls["id"]
@@ -426,7 +423,7 @@ class ProjectArchitectureMapper:
                     fields=cls["fields"],
                 )
 
-        # 2. Register function and method nodes
+        # Function nodes
         for mod in self.parsed_modules.values():
             for fn in mod.functions:
                 fn_id = fn["id"]
@@ -457,13 +454,13 @@ class ProjectArchitectureMapper:
                     complexity_rating=fn["complexity_rating"],
                 )
 
-        # 3. Inheritance edges
+        # Inheritance edges
         for cls_id, cls in all_classes.items():
             for base in cls["bases"]:
                 for b_id in class_by_name.get(base, []):
                     G.add_edge(cls_id, b_id, type="inherits", line=cls["line_start"])
 
-        # 4. Resolve calls
+        # Call edges
         resolved_calls = 0
         unresolved_calls = 0
         ambiguous_calls: list[dict[str, Any]] = []
@@ -489,7 +486,7 @@ class ProjectArchitectureMapper:
                 resolved_target_id = None
                 edge_type = "calls"
 
-                # Method call on self
+                # Self call
                 if receiver == "self":
                     caller_data = symbol_index.get(caller_id, {})
                     class_owner = caller_data.get("class_owner")
@@ -498,7 +495,7 @@ class ProjectArchitectureMapper:
                         if candidate_id in G:
                             resolved_target_id = candidate_id
 
-                # Call via imported module alias (e.g. auth.verify_token())
+                # Imported alias
                 elif receiver and receiver in import_map:
                     target_mod, _ = import_map[receiver]
                     candidate_fn_id = f"{target_mod}::{callee_name}"
@@ -510,7 +507,7 @@ class ProjectArchitectureMapper:
                             resolved_target_id = matches[0]
                             edge_type = "instantiates"
 
-                # Directly imported symbol (from module import foo)
+                # Direct import
                 elif not receiver and callee_name in import_map:
                     target_mod, target_sym = import_map[callee_name]
                     class_matches = [c for c in class_by_name.get(target_sym, []) if c.startswith(target_mod)]
@@ -522,7 +519,7 @@ class ProjectArchitectureMapper:
                         if candidate_fn_id in G:
                             resolved_target_id = candidate_fn_id
 
-                # Local function/class in same module
+                # Local scope
                 elif not receiver:
                     local_fn_id = f"{mod.module_name}::{callee_name}"
                     if local_fn_id in G:
@@ -533,7 +530,7 @@ class ProjectArchitectureMapper:
                             resolved_target_id = local_classes[0]
                             edge_type = "instantiates"
 
-                # Unique function name across project fallback
+                # Global fallback
                 if not resolved_target_id and not receiver:
                     matches = [
                         n for n, d in G.nodes(data=True)
@@ -567,8 +564,8 @@ class ProjectArchitectureMapper:
             "unresolved_list": unresolved_list,
         }
 
+    # Layers
     def detect_layers(self, G: nx.DiGraph) -> dict[str, list[str]]:
-        """Categorize nodes into presentation, services, persistence, core, or utilities."""
         layers: dict[str, list[str]] = {
             "presentation": [],
             "services": [],
@@ -587,12 +584,10 @@ class ProjectArchitectureMapper:
                 or any("route" in d or "endpoint" in d or "get(" in d or "post(" in d for d in decorators)
                 or any(k in file_lower for k in ("api", "routes", "views", "controllers", "endpoints"))
             )
-
             is_persistence = (
                 any(k in file_lower for k in ("database", "db", "models", "repository", "sql", "entity"))
                 or (data.get("kind") == "class" and any(b in ("Base", "Model", "SQLModel", "DeclarativeBase") for b in data.get("bases", [])))
             )
-
             is_core = any(k in file_lower for k in ("config", "setting", "error", "exception", "constant", "types"))
             is_util = any(k in file_lower for k in ("util", "helper", "tool", "common"))
 
@@ -612,12 +607,12 @@ class ProjectArchitectureMapper:
 
         return layers
 
+    # Diagnostics
     def detect_diagnostics(self, G: nx.DiGraph) -> dict[str, Any]:
-        """Run health diagnostics: circular dependencies, dead code, complexity hotspots, and coupling."""
         cycles = find_circular_dependencies(G)
         dead_functions = find_dead_functions(G)
 
-        # Complexity hotspots (> 8)
+        # Complexity hotspots
         hotspots: list[dict[str, Any]] = []
         for node_id, data in G.nodes(data=True):
             cc = data.get("cyclomatic_complexity", 1)
@@ -633,7 +628,7 @@ class ProjectArchitectureMapper:
                 })
         hotspots.sort(key=lambda x: x["complexity"], reverse=True)
 
-        # Module coupling metrics
+        # Coupling
         module_ca: dict[str, set[str]] = {m: set() for m in self.parsed_modules}
         module_ce: dict[str, set[str]] = {m: set() for m in self.parsed_modules}
 
@@ -662,8 +657,8 @@ class ProjectArchitectureMapper:
             "coupling_metrics": coupling_metrics,
         }
 
+    # Project map
     def generate_project_map(self) -> dict[str, Any]:
-        """Execute full scan, graph building, layer analysis, and diagnostics."""
         scan_meta = self.scan_and_parse()
         graph_res = self.build_architecture_graph()
         G = graph_res["graph"]

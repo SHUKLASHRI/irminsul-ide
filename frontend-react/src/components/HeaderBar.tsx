@@ -72,7 +72,7 @@ export const HeaderBar: React.FC = () => {
   const menuBarRef = useRef<HTMLDivElement>(null);
   const layerDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close menus on outside click
+  // Outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuBarRef.current && !menuBarRef.current.contains(e.target as Node)) {
@@ -193,9 +193,9 @@ export const HeaderBar: React.FC = () => {
       ref={menuBarRef}
       className="h-[38px] bg-[#1e1e1e] border-b border-[#333333] px-2 flex items-center justify-between z-[100] select-none font-sans text-xs relative flex-shrink-0"
     >
-      {/* LEFT: App Logo + VS Code Menu Bar (File, Edit, Selection, View, Go, Run, Terminal, Help) */}
+      {/* Menu bar */}
       <div className="flex items-center space-x-1">
-        {/* App Logo */}
+        {/* Logo */}
         <div
           onClick={openWelcome}
           className="flex items-center px-1.5 py-1 rounded hover:bg-[#2d2d2d] cursor-pointer mr-1 group"
@@ -204,7 +204,7 @@ export const HeaderBar: React.FC = () => {
           <IrminsulLogo className="w-5 h-5 filter drop-shadow-[0_0_6px_rgba(255,255,255,0.4)] group-hover:scale-110 transition-transform" />
         </div>
 
-        {/* 1. FILE MENU */}
+        {/* File */}
         <div className="relative">
           <button
             onClick={() => setActiveMenu(activeMenu === 'file' ? null : 'file')}
@@ -269,7 +269,7 @@ export const HeaderBar: React.FC = () => {
                 </button>
               ) : null}
 
-              {/* Recent projects */}
+              {/* Recent */}
               <div className="border-t border-[#333333] my-1" />
               <div className="px-3 py-1 text-[10px] text-[#858585] uppercase tracking-wider font-semibold">
                 Open Recent Workspace
@@ -350,7 +350,7 @@ export const HeaderBar: React.FC = () => {
           )}
         </div>
 
-        {/* 2. EDIT MENU */}
+        {/* Edit */}
         <div className="relative">
           <button
             onClick={() => setActiveMenu(activeMenu === 'edit' ? null : 'edit')}
@@ -412,7 +412,7 @@ export const HeaderBar: React.FC = () => {
           )}
         </div>
 
-        {/* 3. SELECTION MENU */}
+        {/* Selection */}
         <div className="relative">
           <button
             onClick={() => setActiveMenu(activeMenu === 'selection' ? null : 'selection')}
@@ -459,7 +459,7 @@ export const HeaderBar: React.FC = () => {
           )}
         </div>
 
-        {/* 4. VIEW MENU */}
+        {/* View */}
         <div className="relative">
           <button
             onClick={() => setActiveMenu(activeMenu === 'view' ? null : 'view')}
@@ -538,7 +538,7 @@ export const HeaderBar: React.FC = () => {
           )}
         </div>
 
-        {/* 5. GO MENU */}
+        {/* Go */}
         <div className="relative">
           <button
             onClick={() => setActiveMenu(activeMenu === 'go' ? null : 'go')}
@@ -579,7 +579,7 @@ export const HeaderBar: React.FC = () => {
           )}
         </div>
 
-        {/* 6. RUN MENU */}
+        {/* Run */}
         <div className="relative">
           <button
             onClick={() => setActiveMenu(activeMenu === 'run' ? null : 'run')}
@@ -616,7 +616,7 @@ export const HeaderBar: React.FC = () => {
           )}
         </div>
 
-        {/* 7. TERMINAL MENU */}
+        {/* Terminal */}
         <div className="relative">
           <button
             onClick={() => setActiveMenu(activeMenu === 'terminal' ? null : 'terminal')}
@@ -660,7 +660,7 @@ export const HeaderBar: React.FC = () => {
           )}
         </div>
 
-        {/* 8. HELP MENU */}
+        {/* Help */}
         <div className="relative">
           <button
             onClick={() => setActiveMenu(activeMenu === 'help' ? null : 'help')}
@@ -720,7 +720,7 @@ export const HeaderBar: React.FC = () => {
         </div>
       </div>
 
-      {/* CENTER: Exact VS Code Document Search Pill (repo — Irminsul IDE — activeDoc) */}
+      {/* Search */}
       <div className="flex-1 max-w-lg mx-3 flex items-center justify-center">
         <button
           onClick={openSpotlight}
@@ -742,9 +742,9 @@ export const HeaderBar: React.FC = () => {
         </button>
       </div>
 
-      {/* RIGHT: Analysis Mode Pill, Layer Filter, Panel Toggles, Settings, Profile */}
+      {/* Controls */}
       <div className="flex items-center space-x-1.5 flex-shrink-0">
-        {/* Analysis Mode Segmented Control */}
+        {/* Mode */}
         <div className="hidden lg:flex items-center bg-[#252526] p-0.5 rounded border border-[#3e3e42]">
           {(
             [
@@ -773,7 +773,7 @@ export const HeaderBar: React.FC = () => {
           })}
         </div>
 
-        {/* Hops selector (in Impact mode) */}
+        {/* Hops */}
         {analysisMode === 'impact' && (
           <div className="hidden sm:flex items-center gap-1 bg-[#252526] px-1.5 py-0.5 rounded border border-[#3e3e42] text-[10px] font-mono text-[#858585]">
             <span>Hops:</span>
@@ -793,7 +793,7 @@ export const HeaderBar: React.FC = () => {
           </div>
         )}
 
-        {/* Layer Filter Dropdown */}
+        {/* Layers */}
         <div className="relative" ref={layerDropdownRef}>
           <button
             onClick={() => setLayerFilterOpen(!layerFilterOpen)}
@@ -837,7 +837,7 @@ export const HeaderBar: React.FC = () => {
 
         <div className="h-3 w-[1px] bg-[#3e3e42]" />
 
-        {/* Panel Toggles */}
+        {/* Panels */}
         <button
           onClick={() => setLeftPanelOpen((p) => !p)}
           className={`p-1 rounded hover:bg-[#333333] transition-colors ${
@@ -880,7 +880,7 @@ export const HeaderBar: React.FC = () => {
 
         <div className="h-3 w-[1px] bg-[#3e3e42]" />
 
-        {/* Preferences: Settings */}
+        {/* Settings */}
         <button
           onClick={openSettings}
           className="p-1 rounded text-[#858585] hover:text-[#ffffff] hover:bg-[#333333] transition-colors"

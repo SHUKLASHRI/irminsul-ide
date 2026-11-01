@@ -1,5 +1,3 @@
-"""Flask application providing HTTP APIs for Irminsul IDE."""
-
 from __future__ import annotations
 
 import os
@@ -8,7 +6,6 @@ from typing import Any
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
-# Ensure root directory is in sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from backend.project_service import service
@@ -20,10 +17,7 @@ app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path="")
 CORS(app)
 
 
-# ---------------------------------------------------------------------------
-# Static frontend and download website routes
-# ---------------------------------------------------------------------------
-
+# Static
 @app.route("/")
 def index():
     return send_from_directory(FRONTEND_DIR, "index.html")
@@ -31,13 +25,11 @@ def index():
 
 @app.route("/download")
 def download():
-    """Serve Irminsul IDE product download & landing page."""
     return send_from_directory(WEBSITE_DIR, "index.html")
 
 
 @app.route("/website/<path:path>")
 def website_static(path: str):
-    """Serve website static assets (logo, favicon)."""
     return send_from_directory(WEBSITE_DIR, path)
 
 
@@ -49,22 +41,15 @@ def static_proxy(path: str):
     return send_from_directory(FRONTEND_DIR, "index.html")
 
 
-# ---------------------------------------------------------------------------
-# Health check
-# ---------------------------------------------------------------------------
-
+# Health
 @app.route("/health")
 def health():
     return jsonify({"status": "ok", "version": "1.0.0"})
 
 
-# ---------------------------------------------------------------------------
-# Native OS Folder Chooser (Windows Explorer Folder Dialog)
-# ---------------------------------------------------------------------------
-
+# Folder picker
 @app.route("/api/choose-folder", methods=["GET", "POST"])
 def api_choose_folder():
-    """Summon native Windows Explorer folder chooser dialog and return selected path."""
     from concurrent.futures import ThreadPoolExecutor
     data = request.get_json(silent=True) or {}
     initial_dir = data.get("initial_dir", "")
@@ -72,7 +57,7 @@ def api_choose_folder():
     def _show_dialog():
         init = initial_dir if initial_dir and os.path.isdir(initial_dir) else os.getcwd()
 
-        # 1. Try Tkinter (native modern Windows IFileDialog directory browser)
+        # Tkinter
         try:
             import tkinter as tk
             from tkinter import filedialog
@@ -86,7 +71,7 @@ def api_choose_folder():
         except Exception:
             pass
 
-        # 2. Windows PowerShell FolderBrowserDialog
+        # Windows
         if sys.platform == "win32":
             try:
                 import subprocess
@@ -105,7 +90,7 @@ def api_choose_folder():
             except Exception:
                 pass
 
-        # 3. macOS osascript native folder chooser
+        # macOS
         if sys.platform == "darwin":
             try:
                 import subprocess
@@ -117,7 +102,7 @@ def api_choose_folder():
             except Exception:
                 pass
 
-        # 4. Linux zenity / kdialog folder chooser
+        # Linux
         if sys.platform.startswith("linux"):
             try:
                 import subprocess
@@ -143,10 +128,7 @@ def api_choose_folder():
         return jsonify({"success": False, "error": str(exc), "path": ""}), 500
 
 
-# ---------------------------------------------------------------------------
-# Architecture analysis endpoints
-# ---------------------------------------------------------------------------
-
+# Analysis
 @app.route("/analyze", methods=["POST"])
 def analyze():
     data = request.get_json(silent=True) or {}
@@ -189,15 +171,15 @@ def project_map():
     return jsonify(result)
 
 
+# Source snippet
 @app.route("/source")
 def source():
     file_path = request.args.get("file", "").strip()
     if not file_path:
         return jsonify({"error": "file parameter is required"}), 400
 
-    line_param = request.args.get("line", "1")
     try:
-        target_line = int(line_param)
+        target_line = int(request.args.get("line", "1"))
     except ValueError:
         return jsonify({"error": "line parameter must be an integer"}), 400
 
@@ -224,6 +206,7 @@ def source():
         return jsonify({"error": str(e)}), 500
 
 
+# File I/O
 @app.route("/file/content")
 def file_content():
     file_path = request.args.get("file", "").strip()
@@ -270,6 +253,7 @@ def save_file():
         return jsonify({"error": str(e)}), 500
 
 
+# Diagnostics
 @app.route("/analyze/circular-deps", methods=["POST"])
 def circular_deps():
     data = request.get_json(silent=True) or {}
@@ -317,10 +301,7 @@ def impact():
         return jsonify({"error": str(e)}), 500
 
 
-# ---------------------------------------------------------------------------
-# Refactoring endpoints
-# ---------------------------------------------------------------------------
-
+# Refactoring
 @app.route("/refactor/rename/preview", methods=["POST"])
 def rename_preview():
     data = request.get_json(silent=True) or {}
@@ -364,10 +345,7 @@ def rename_apply():
         return jsonify({"error": str(e)}), 500
 
 
-# ---------------------------------------------------------------------------
-# Terminal Execution Endpoint
-# ---------------------------------------------------------------------------
-
+# Terminal
 @app.route("/terminal/run", methods=["POST"])
 def terminal_run():
     import subprocess
@@ -401,10 +379,7 @@ def terminal_run():
         return jsonify({"error": str(e), "exit_code": 1, "cwd": cwd}), 500
 
 
-# ---------------------------------------------------------------------------
-# Backwards-compatibility helpers for main.py / scripts
-# ---------------------------------------------------------------------------
-
+# Helpers
 def _resolve_project_path(path: str = "") -> str:
     return service.resolve_project_root(path)
 

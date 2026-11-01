@@ -76,19 +76,20 @@ interface ExplorerContextType {
   closeRenameModal: () => void;
   apiConnected: boolean;
 
-  // Visual Hierarchy & Cognitive Load controls
+  // View state
   cardDensity: CardDensity;
   setCardDensity: (d: CardDensity) => void;
   activeLayerFilter: string;
   setActiveLayerFilter: (l: string) => void;
 
-  // Toast notification & Undo system
+  // Toasts
   toasts: ToastNotification[];
   showToast: (t: Omit<ToastNotification, 'id'>) => void;
   dismissToast: (id: string) => void;
   hasCustomPositions: boolean;
   undoResetLayout: () => void;
 
+  // Layout
   nodeCustomPositions: Record<string, { x: number; y: number }>;
   updateNodePosition: (id: string, pos: { x: number; y: number }) => void;
   resetNodePositions: () => void;
@@ -102,19 +103,19 @@ interface ExplorerContextType {
   setRightPanelHovered: (v: boolean) => void;
   minimizeAllPanels: () => void;
 
-  // Settings & Theme
+  // Settings
   settings: IDESettings;
   updateSettings: (s: Partial<IDESettings>) => void;
   isSettingsOpen: boolean;
   openSettings: () => void;
   closeSettings: () => void;
 
-  // Welcome & Walkthrough
+  // Welcome
   isWelcomeOpen: boolean;
   openWelcome: () => void;
   closeWelcome: () => void;
 
-  // Bottom Panel & Integrated Terminal
+  // Terminal
   isBottomPanelOpen: boolean;
   setIsBottomPanelOpen: React.Dispatch<React.SetStateAction<boolean>>;
   toggleBottomPanel: () => void;
@@ -125,11 +126,11 @@ interface ExplorerContextType {
   runTerminalCommand: (cmd: string) => Promise<void>;
   clearTerminal: () => void;
 
-  // Recent Projects
+  // Recent
   recentProjects: RecentProject[];
   addToRecentProjects: (path: string) => void;
 
-  // Actions
+  // Operations
   loadProject: (path?: string, forceRefresh?: boolean) => Promise<void>;
   selectNodeById: (nodeId: string) => void;
   selectNode: (node: GraphNode | null) => void;
@@ -140,6 +141,7 @@ interface ExplorerContextType {
 const ExplorerContext = createContext<ExplorerContextType | null>(null);
 
 export const ExplorerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // State
   const [projectPath, setProjectPath] = useState<string>('');
   const [nodes, setNodes] = useState<GraphNode[]>([]);
   const [edges, setEdges] = useState<GraphEdge[]>([]);
@@ -178,12 +180,10 @@ export const ExplorerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [rightPanelOpen, setRightPanelOpen] = useState<boolean>(true);
   const [rightPanelHovered, setRightPanelHovered] = useState<boolean>(false);
   const [apiConnected, setApiConnected] = useState<boolean>(false);
-
-  // Visual Hierarchy & Cognitive Load controls
   const [cardDensity, setCardDensity] = useState<CardDensity>('standard');
   const [activeLayerFilter, setActiveLayerFilter] = useState<string>('ALL');
 
-  // VS Code Settings
+  // Settings
   const [settings, setSettings] = useState<IDESettings>(() => {
     try {
       const saved = localStorage.getItem('irminsul_settings');
@@ -220,7 +220,7 @@ export const ExplorerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isWelcomeOpen, setIsWelcomeOpen] = useState<boolean>(false);
 
-  // Bottom Panel & Terminal
+  // Terminal
   const [isBottomPanelOpen, setIsBottomPanelOpen] = useState<boolean>(false);
   const [bottomPanelTab, setBottomPanelTab] = useState<TerminalTab>('terminal');
   const [terminalHistory, setTerminalHistory] = useState<TerminalHistoryItem[]>(() => [
@@ -271,7 +271,7 @@ export const ExplorerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setTerminalHistory([]);
   }, []);
 
-  // Recent Projects
+  // Recent
   const [recentProjects, setRecentProjects] = useState<RecentProject[]>(() => {
     try {
       const saved = localStorage.getItem('irminsul_recent');
@@ -293,7 +293,7 @@ export const ExplorerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   }, []);
 
-  // Toast Notification & Undo system
+  // Toasts
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
   const showToast = useCallback((t: Omit<ToastNotification, 'id'>) => {
     const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
@@ -309,14 +309,14 @@ export const ExplorerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setToasts((prev) => prev.filter((item) => item.id !== id));
   }, []);
 
-  // In-memory cache for 0ms instantaneous symbol inspection without network stutter
+  // Cache
   const sourceCache = useRef<Map<string, SourceResponse>>(new Map());
   const impactCache = useRef<Map<string, ImpactResponse>>(new Map());
   const fetchTimeoutRef = useRef<any>(null);
 
   const clearError = useCallback(() => setError(null), []);
 
-  // Poll health check (guarded to avoid unneeded state updates)
+  // Health check
   useEffect(() => {
     api.checkHealth().then((ok) => setApiConnected((prev) => (prev === ok ? prev : ok)));
     const interval = setInterval(() => {
@@ -325,7 +325,7 @@ export const ExplorerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => clearInterval(interval);
   }, []);
 
-  // Global Keyboard shortcuts (⌘K / Ctrl+K / F2 / Esc)
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
@@ -345,7 +345,7 @@ export const ExplorerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedNode]);
 
-  // Load project AST from Flask
+  // Project load
   const loadProject = useCallback(
     async (customPath?: string, forceRefresh = false) => {
       const targetPath = customPath !== undefined ? customPath : projectPath;
@@ -397,7 +397,6 @@ export const ExplorerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           } catch {}
         }
 
-        // Auto-select first node if available
         if (data.nodes && data.nodes.length > 0) {
           setSelectedNode(data.nodes[0]);
         } else {
@@ -409,20 +408,15 @@ export const ExplorerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setIsLoading(false);
       }
     },
-    [projectPath]
+    [projectPath, addToRecentProjects]
   );
 
-  useEffect(() => {
-    // Clean boot: start empty. User opens a folder to begin.
-  }, []);
-
-  // Fetch node source & impact whenever selectedNode changes (with cache & debounce)
+  // Node details
   const fetchNodeDetails = useCallback((node: GraphNode, immediate = false) => {
     const srcKey = `${node.file}:${node.line}`;
     const cachedSrc = sourceCache.current.get(srcKey);
     const cachedImpact = impactCache.current.get(node.id);
 
-    // If completely cached, update state immediately with zero network delay
     if (cachedSrc && cachedImpact) {
       setSourceSnippet(cachedSrc);
       setImpact(cachedImpact);
@@ -469,7 +463,6 @@ export const ExplorerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (immediate) {
       executeFetch();
     } else {
-      // 120ms debounce prevents network storm if user is starting a drag gesture
       fetchTimeoutRef.current = setTimeout(executeFetch, 120);
     }
   }, []);
@@ -529,35 +522,18 @@ export const ExplorerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setZoom((prev) => Math.min(Math.max(0.4, Number((prev + delta).toFixed(2))), 2.2));
   }, []);
 
-  const resetZoom = useCallback(() => {
-    setZoom(1.0);
-  }, []);
-
-  const togglePan = useCallback(() => {
-    setPanActive((prev) => !prev);
-  }, []);
-
+  const resetZoom = useCallback(() => setZoom(1.0), []);
+  const togglePan = useCallback(() => setPanActive((prev) => !prev), []);
   const toggleLayoutAlgorithm = useCallback(() => {
     setLayoutAlgorithm((prev) => (prev === 'Sugiyama' ? 'Force-Directed' : 'Sugiyama'));
   }, []);
 
-  const toggleSidebar = useCallback(() => {
-    setSidebarCollapsed((prev) => !prev);
-  }, []);
-
-  const toggleInspector = useCallback(() => {
-    setInspectorCollapsed((prev) => !prev);
-  }, []);
-
-  const toggleFocusMode = useCallback(() => {
-    setFocusMode((prev) => !prev);
-  }, []);
+  const toggleSidebar = useCallback(() => setSidebarCollapsed((prev) => !prev), []);
+  const toggleInspector = useCallback(() => setInspectorCollapsed((prev) => !prev), []);
+  const toggleFocusMode = useCallback(() => setFocusMode((prev) => !prev), []);
 
   const updateNodePosition = useCallback((id: string, pos: { x: number; y: number }) => {
-    setNodeCustomPositions((prev) => ({
-      ...prev,
-      [id]: pos,
-    }));
+    setNodeCustomPositions((prev) => ({ ...prev, [id]: pos }));
   }, []);
 
   const hasCustomPositions = Object.keys(nodeCustomPositions).length > 0;
@@ -566,10 +542,7 @@ export const ExplorerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (previousPositions) {
       setNodeCustomPositions(previousPositions);
       setPreviousPositions(null);
-      showToast({
-        type: 'success',
-        message: 'Restored previous canvas layout positions.',
-      });
+      showToast({ type: 'success', message: 'Restored previous canvas layout positions.' });
     }
   }, [previousPositions, showToast]);
 
@@ -582,9 +555,7 @@ export const ExplorerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       type: 'info',
       message: 'Layout auto-arranged into semantic columns.',
       actionLabel: 'Undo',
-      onAction: () => {
-        undoResetLayout();
-      },
+      onAction: () => undoResetLayout(),
     });
   }, [nodeCustomPositions, showToast, undoResetLayout]);
 
@@ -607,10 +578,7 @@ export const ExplorerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         loadProject();
       }
       setRenameModalNode(null);
-      showToast({
-        type: 'success',
-        message: 'Symbol successfully renamed across project files.',
-      });
+      showToast({ type: 'success', message: 'Symbol successfully renamed across project files.' });
     },
     [loadProject, showToast]
   );
@@ -629,22 +597,12 @@ export const ExplorerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
         sourceCache.current.clear();
         impactCache.current.clear();
-        showToast({
-          message: res.message || 'File saved successfully',
-          type: 'success',
-        });
+        showToast({ message: res.message || 'File saved successfully', type: 'success' });
         return { success: true };
       } catch (err: any) {
         const errorMsg = err.error || err.message || 'Failed to save file';
-        showToast({
-          message: errorMsg,
-          type: 'error',
-        });
-        return {
-          success: false,
-          error: errorMsg,
-          syntax_error: err.syntax_error,
-        };
+        showToast({ message: errorMsg, type: 'error' });
+        return { success: false, error: errorMsg, syntax_error: err.syntax_error };
       }
     },
     [projectPath, showToast]
@@ -706,19 +664,20 @@ export const ExplorerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         closeRenameModal: () => setRenameModalNode(null),
         apiConnected,
 
-        // Visual Hierarchy & Cognitive Load controls
+        // View
         cardDensity,
         setCardDensity,
         activeLayerFilter,
         setActiveLayerFilter,
 
-        // Toast notification & Undo system
+        // Toasts
         toasts,
         showToast,
         dismissToast,
         hasCustomPositions,
         undoResetLayout,
 
+        // Layout
         nodeCustomPositions,
         updateNodePosition,
         resetNodePositions,
@@ -739,12 +698,12 @@ export const ExplorerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         openSettings: () => setIsSettingsOpen(true),
         closeSettings: () => setIsSettingsOpen(false),
 
-        // Welcome & Walkthrough
+        // Welcome
         isWelcomeOpen,
         openWelcome: () => setIsWelcomeOpen(true),
         closeWelcome: () => setIsWelcomeOpen(false),
 
-        // Bottom Panel & Terminal
+        // Terminal
         isBottomPanelOpen,
         setIsBottomPanelOpen,
         toggleBottomPanel: () => setIsBottomPanelOpen((prev) => !prev),
@@ -755,10 +714,11 @@ export const ExplorerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         runTerminalCommand,
         clearTerminal,
 
-        // Recent Projects
+        // Recent
         recentProjects,
         addToRecentProjects,
 
+        // Actions
         loadProject,
         selectNodeById,
         selectNode: setSelectedNode,

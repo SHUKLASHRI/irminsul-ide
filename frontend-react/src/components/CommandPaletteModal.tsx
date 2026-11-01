@@ -61,7 +61,7 @@ export const CommandPaletteModal: React.FC = () => {
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
-        {/* VS Code Quick Open Input Bar */}
+        {/* Search */}
         <div className="flex items-center px-3 py-2 border-b border-[#3e3e42] bg-[#1e1e1e] gap-2">
           <Search size={15} className="text-[#858585]" />
           <input
@@ -85,7 +85,7 @@ export const CommandPaletteModal: React.FC = () => {
           </kbd>
         </div>
 
-        {/* Results List */}
+        {/* Results */}
         <div className="max-h-[340px] overflow-y-auto p-1 space-y-0.5 code-scroll bg-[#252526]">
           {filteredNodes.length === 0 ? (
             <div className="p-8 text-center text-[#858585] font-mono text-xs">

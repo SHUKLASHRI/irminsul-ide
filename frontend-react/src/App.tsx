@@ -19,7 +19,7 @@ import {
   GitBranch,
 } from 'lucide-react';
 
-const PyArchStudioApp: React.FC = () => {
+const IrminsulIdeApp: React.FC = () => {
   const {
     error,
     clearError,
@@ -39,30 +39,30 @@ const PyArchStudioApp: React.FC = () => {
     dismissToast,
   } = useExplorer();
 
-  // Global layout keyboard shortcuts
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+B / Cmd+B: Toggle Sidebar
+      // Toggle sidebar
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
         e.preventDefault();
         setLeftPanelOpen((prev) => !prev);
       }
-      // Ctrl+J / Cmd+J: Toggle Inspector
+      // Toggle inspector
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'j') {
         e.preventDefault();
         setRightPanelOpen((prev) => !prev);
       }
-      // Ctrl+` / Cmd+`: Toggle Bottom Terminal
+      // Toggle terminal
       if ((e.ctrlKey || e.metaKey) && e.key === '`') {
         e.preventDefault();
         toggleBottomPanel();
       }
-      // Ctrl+, / Cmd+,: Open Settings
+      // Open settings
       if ((e.ctrlKey || e.metaKey) && e.key === ',') {
         e.preventDefault();
         openSettings();
       }
-      // Escape: minimize open floating panels if modals aren't open
+      // Minimize panels
       if (e.key === 'Escape') {
         minimizeAllPanels();
       }
@@ -75,36 +75,34 @@ const PyArchStudioApp: React.FC = () => {
 
   return (
     <div className="h-screen w-screen relative overflow-hidden bg-[#1e1e1e] text-[#cccccc] font-sans text-xs antialiased select-none flex flex-col">
-      {/* VS Code Top Indeterminate Progress Line (when parsing/loading AST) */}
+      {/* Progress */}
       {isLoading && (
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#252526] z-[150] overflow-hidden">
           <div className="h-full bg-[#007acc] w-1/3 animate-[pulse_1s_ease-in-out_infinite] translate-x-1/2" />
         </div>
       )}
 
-      {/* 1. TOP VS CODE TITLE & MENU BAR (Matching User Screenshot) */}
+      {/* Header */}
       <HeaderBar />
 
-      {/* 3. IMMERSIVE CANVAS */}
+      {/* Canvas */}
       <HeroCanvas />
 
-      {/* 4. DYNAMIC LEFT SIDEBAR & RIGHT INSPECTOR */}
+      {/* Panels */}
       <ProjectSidebar />
       <InspectorPanel />
-
-      {/* 5. INTEGRATED BOTTOM TERMINAL & PROBLEMS DOCK */}
       <BottomPanel />
 
-      {/* MODALS */}
+      {/* Modals */}
       <CommandPaletteModal />
       <SafeRenameModal />
       <SettingsModal />
       <WelcomeModal />
 
-      {/* TOAST SYSTEM (With Undo Actions & Feedback) */}
+      {/* Toasts */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
-      {/* VS CODE BOTTOM NOTIFICATION TOAST (Clean, non-intrusive error handling) */}
+      {/* Error notification */}
       {error && (
         <div className="absolute bottom-9 right-4 z-[210] bg-[#252526] border border-[#3e3e42] text-[#cccccc] p-3 rounded-[3px] shadow-2xl flex items-start gap-2.5 max-w-md font-sans animate-in fade-in slide-in-from-bottom-2">
           <AlertCircle size={18} className="text-[#f14c4c] flex-shrink-0 mt-0.5" />
@@ -132,9 +130,9 @@ const PyArchStudioApp: React.FC = () => {
         </div>
       )}
 
-      {/* VS CODE CLASSIC STATUS BAR (Always visible at the bottom) */}
+      {/* Status bar */}
       <footer className="absolute bottom-0 left-0 right-0 h-6 bg-[#007acc] text-[#ffffff] px-2.5 flex items-center justify-between text-[11px] z-40 select-none font-sans">
-        {/* Left Status Items */}
+        {/* Left items */}
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-1.5 hover:bg-[#094771] px-1 py-0.5 rounded cursor-pointer">
             <FolderOpen size={13} />
@@ -161,7 +159,7 @@ const PyArchStudioApp: React.FC = () => {
           )}
         </div>
 
-        {/* Center Breadcrumb */}
+        {/* Center breadcrumb */}
         {selectedNode && (
           <div className="hidden md:flex items-center space-x-1 text-[11px] font-mono opacity-90 truncate max-w-sm">
             <span>{selectedNode.filename}</span>
@@ -170,7 +168,7 @@ const PyArchStudioApp: React.FC = () => {
           </div>
         )}
 
-        {/* Right Status Items */}
+        {/* Right items */}
         <div className="flex items-center space-x-3">
           <span className="hover:bg-[#094771] px-1 py-0.5 rounded cursor-pointer font-mono">
             {nodes.length} symbols
@@ -200,7 +198,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <ExplorerProvider>
-        <PyArchStudioApp />
+        <IrminsulIdeApp />
       </ExplorerProvider>
     </ErrorBoundary>
   );

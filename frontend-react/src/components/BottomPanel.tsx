@@ -38,14 +38,14 @@ export const BottomPanel: React.FC = () => {
   const terminalEndRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
 
-  // Auto-scroll terminal output to bottom
+  // Auto-scroll
   useEffect(() => {
     if (bottomPanelTab === 'terminal') {
       terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [terminalHistory, bottomPanelTab]);
 
-  // Handle panel resizing
+  // Resize
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging.current) return;

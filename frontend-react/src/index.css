@@ -144,7 +144,7 @@ html, body {
 
 /* Prism syntax highlighting — exact VS Code Dark+ theme */
 pre, code {
-  font-family: "Cascadia Code", "Cascadia Mono", Consolas, "Courier New", monospace !important;
+  font-family: Consolas, "Courier New", monospace !important;
 }
 
 pre code {

@@ -43,10 +43,9 @@ export const InspectorPanel: React.FC = () => {
     saveFile,
   } = useExplorer();
 
+  // State
   const [copied, setCopied] = useState(false);
   const [isFullEditorOpen, setIsFullEditorOpen] = useState(false);
-
-  // Inline editing state
   const [inlineEditMode, setInlineEditMode] = useState(false);
   const [inlineContent, setInlineContent] = useState('');
   const [inlineOriginalContent, setInlineOriginalContent] = useState('');
@@ -59,13 +58,13 @@ export const InspectorPanel: React.FC = () => {
 
   const isUnfolded = rightPanelOpen || rightPanelHovered;
 
-  // Compute reality check metrics (Combats Confirmation Bias)
-  const directCallers = (impact && impact.direct_callers) || [];
-  const transitiveCallers = (impact && impact.callers) || directCallers;
+  // Metrics
+  const directCallers = impact?.direct_callers || [];
+  const transitiveCallers = impact?.callers || directCallers;
   const hiddenCallersCount = Math.max(0, transitiveCallers.length - directCallers.length);
-  const callees = (impact && impact.direct_callees) || [];
+  const callees = impact?.direct_callees || [];
 
-  // 1. Layer boundary violations (Combat Confirmation Bias: "My code is cleanly layered")
+  // Layer check
   const layerViolations = useMemo(() => {
     if (!selectedNode || !selectedNode.tier) return [];
     const srcTier = selectedNode.tier.toLowerCase();
@@ -79,7 +78,7 @@ export const InspectorPanel: React.FC = () => {
           violations.push({
             callee: target.name,
             targetTier: tgtTier,
-            reason: 'Presentation directly calls Persistence (bypasses Services)',
+            reason: 'Presentation directly calls Persistence',
           });
         } else if (
           srcTier === 'persistence' &&
@@ -96,7 +95,7 @@ export const InspectorPanel: React.FC = () => {
     return violations;
   }, [selectedNode, callees, nodes]);
 
-  // 2. Dead / Orphan detection (Combat Confirmation Bias: "All code is used")
+  // Orphan check
   const isOrphan =
     selectedNode &&
     directCallers.length === 0 &&
@@ -104,13 +103,13 @@ export const InspectorPanel: React.FC = () => {
     !selectedNode.name.startsWith('test_') &&
     selectedNode.kind !== 'class';
 
-  // 3. Hidden Circular Dependency membership
+  // Cycles
   const cycleInvolved = useMemo(() => {
     if (!selectedNode || !activeCycles) return null;
     return activeCycles.find((c) => c.includes(selectedNode.id) || c.includes(selectedNode.name));
   }, [selectedNode, activeCycles]);
 
-  // 4. Downstream blast radius files count
+  // Blast radius
   const blastRadiusFiles = useMemo(() => {
     if (!transitiveCallers.length) return [];
     const files = new Set<string>();
@@ -121,7 +120,7 @@ export const InspectorPanel: React.FC = () => {
     return Array.from(files);
   }, [transitiveCallers, nodes]);
 
-  // Load inline full file content when requested
+  // File loading
   const loadInlineContent = useCallback(() => {
     if (!selectedNode?.file) return;
     setIsLoadingInline(true);
@@ -138,7 +137,6 @@ export const InspectorPanel: React.FC = () => {
       });
   }, [selectedNode?.file]);
 
-  // Reset or reload inline content when selected node changes
   useEffect(() => {
     setInlineContent('');
     setInlineOriginalContent('');
@@ -148,7 +146,7 @@ export const InspectorPanel: React.FC = () => {
     }
   }, [selectedNode?.id, inlineEditMode, loadInlineContent, selectedNode?.file]);
 
-  // Save inline edits
+  // File save
   const handleSaveInline = async () => {
     if (!selectedNode?.file || isSavingInline) return;
     setIsSavingInline(true);
@@ -167,7 +165,7 @@ export const InspectorPanel: React.FC = () => {
     }
   };
 
-  // Keyboard shortcut: Tab indentation and Ctrl+S inside inline editor
+  // Keyboard
   const handleInlineKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
       e.preventDefault();
@@ -190,11 +188,9 @@ export const InspectorPanel: React.FC = () => {
     }
   };
 
-  if (!isUnfolded) {
-    return null;
-  }
+  if (!isUnfolded) return null;
 
-  // EMPTY STATE (No symbol selected)
+  // Empty state
   if (!selectedNode) {
     return (
       <aside
@@ -206,7 +202,7 @@ export const InspectorPanel: React.FC = () => {
         <Crosshair size={28} className="text-[#858585] mb-2" />
         <div className="text-[#ffffff] font-medium text-xs mb-1">Select a Symbol</div>
         <p className="text-[11px] text-[#858585] max-w-[210px] leading-relaxed">
-          Click on any node in the architecture graph to inspect callers, callees, metrics, and edit source code.
+          Click any node in the architecture graph to inspect callers, callees, metrics, and edit source code.
         </p>
       </aside>
     );
@@ -238,7 +234,6 @@ export const InspectorPanel: React.FC = () => {
 
   const inlineTotalLines = inlineContent.split('\n').length;
 
-  // EXPANDED STATE: VS Code Inspector Workbench Panel
   return (
     <>
       <aside
@@ -248,7 +243,7 @@ export const InspectorPanel: React.FC = () => {
         className="absolute right-3 top-14 bottom-6 bg-[#252526] border border-[#3e3e42] rounded-[3px] shadow-2xl z-40 flex flex-col justify-between overflow-hidden select-none transition-all duration-200"
         id="inspectorPanel"
       >
-        {/* Header Bar */}
+        {/* Header */}
         <div className="h-9 px-3 border-b border-[#3e3e42] flex items-center justify-between bg-[#2d2d2d]">
           <div className="flex items-center space-x-2 truncate">
             <span
@@ -270,17 +265,15 @@ export const InspectorPanel: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-1.5">
-            {/* Quick Edit Code button */}
             <button
               onClick={() => setIsFullEditorOpen(true)}
               className="px-2 py-0.5 bg-[#094771] hover:bg-[#007acc] text-white rounded-[2px] text-[10px] font-mono flex items-center gap-1 micro-tap border border-[#007acc]"
-              title="Open Full Code Editor (Ctrl+S to save)"
+              title="Open Full Code Editor (Ctrl+S)"
             >
               <Code size={11} />
               <span>Edit Code</span>
             </button>
 
-            {/* Refactor shortcut button */}
             <button
               onClick={() => openRenameModal(selectedNode)}
               className="px-1.5 py-0.5 bg-[#333333] hover:bg-[#3e3e42] border border-[#3e3e42] rounded-[2px] text-[10px] font-mono text-[#cccccc] hover:text-[#ffffff] flex items-center gap-1 micro-tap"
@@ -290,7 +283,6 @@ export const InspectorPanel: React.FC = () => {
               <span>F2</span>
             </button>
 
-            {/* Close / Fold button */}
             <button
               onClick={() => {
                 setRightPanelOpen(false);
@@ -304,9 +296,9 @@ export const InspectorPanel: React.FC = () => {
           </div>
         </div>
 
-        {/* Main Scrollable Content */}
+        {/* Content */}
         <div className="flex-1 overflow-y-auto p-3 space-y-3.5 panel-scroll">
-          {/* Metadata Card */}
+          {/* Metadata */}
           <div className="p-2.5 bg-[#1e1e1e] border border-[#3e3e42] rounded-[2px] space-y-2">
             <div className="flex items-center justify-between text-[11px] font-mono border-b border-[#2d2d2d] pb-1.5">
               <span className="text-[#858585]">Location</span>
@@ -350,7 +342,7 @@ export const InspectorPanel: React.FC = () => {
             </div>
           </div>
 
-          {/* REALITY CHECK CRITIQUE (Combats Confirmation Bias) */}
+          {/* Diagnostics */}
           <div className="p-2.5 bg-[#1e1e1e] border border-[#3e3e42] rounded-[2px] space-y-2">
             <div className="flex items-center justify-between text-[11px] font-mono text-[#cccccc] font-semibold border-b border-[#2d2d2d] pb-1">
               <div className="flex items-center gap-1.5">
@@ -360,7 +352,7 @@ export const InspectorPanel: React.FC = () => {
             </div>
 
             <div className="space-y-1.5 text-[10px] font-mono">
-              {/* Transitive Blast Radius (Countering "It only affects this file") */}
+              {/* Blast radius */}
               <div className="p-1.5 rounded-[2px] bg-[#181818] border border-[#2d2d2d] flex items-center justify-between">
                 <span className="text-[#858585]">Blast Radius:</span>
                 <div className="flex items-center gap-1.5">
@@ -368,9 +360,9 @@ export const InspectorPanel: React.FC = () => {
                   {hiddenCallersCount > 0 ? (
                     <span
                       className="text-[#cca700] bg-[#332a15] px-1 rounded-[1px] border border-[#4d4020]"
-                      title={`${hiddenCallersCount} indirect downstream callers affected across ${blastRadiusFiles.length} file(s)`}
+                      title={`${hiddenCallersCount} indirect downstream callers across ${blastRadiusFiles.length} files`}
                     >
-                      +{hiddenCallersCount} hidden indirect ({blastRadiusFiles.length} file{blastRadiusFiles.length !== 1 ? 's' : ''})
+                      +{hiddenCallersCount} hidden ({blastRadiusFiles.length} file{blastRadiusFiles.length !== 1 ? 's' : ''})
                     </span>
                   ) : (
                     <span className="text-[#4ec9b0]">Isolated</span>
@@ -378,7 +370,7 @@ export const InspectorPanel: React.FC = () => {
                 </div>
               </div>
 
-              {/* Layer Inversion / Boundary Check (Countering "Code is cleanly layered") */}
+              {/* Layer integrity */}
               {layerViolations.length > 0 ? (
                 <div className="p-1.5 rounded-[2px] bg-[#332a15] border border-[#cca700]/50 text-[#e0d6b5] space-y-0.5">
                   <div className="flex items-center gap-1 text-[#cca700] font-semibold">
@@ -398,7 +390,7 @@ export const InspectorPanel: React.FC = () => {
                 </div>
               )}
 
-              {/* Circular Dependency Loop */}
+              {/* Cycles */}
               {cycleInvolved && (
                 <div className="p-1.5 rounded-[2px] bg-[#332020] border border-[#f14c4c]/40 text-[#f14c4c] flex items-center gap-1.5">
                   <RotateCcw size={12} className="flex-shrink-0" />
@@ -406,7 +398,7 @@ export const InspectorPanel: React.FC = () => {
                 </div>
               )}
 
-              {/* Orphan Code Alert (Countering "Everything here is used") */}
+              {/* Dead code */}
               {isOrphan && (
                 <div className="p-1.5 rounded-[2px] bg-[#2d2815] border border-[#cca700]/40 text-[#cca700] flex items-center gap-1.5">
                   <AlertCircle size={12} className="flex-shrink-0" />
@@ -416,7 +408,7 @@ export const InspectorPanel: React.FC = () => {
             </div>
           </div>
 
-          {/* Call Graph Connections */}
+          {/* Calls */}
           <div className="grid grid-cols-2 gap-2">
             {/* Callers */}
             <div className="p-2 bg-[#1e1e1e] border border-[#3e3e42] rounded-[2px]">
@@ -465,13 +457,13 @@ export const InspectorPanel: React.FC = () => {
             </div>
           </div>
 
-          {/* Interactive Source Code Viewer & Editor (VS Code Style) */}
+          {/* Source viewer */}
           <div
             className="border border-[#3e3e42] rounded-[2px] overflow-hidden bg-[#1e1e1e]"
             onMouseEnter={() => setIsEditorFocused(true)}
             onMouseLeave={() => setIsEditorFocused(false)}
           >
-            {/* Editor Header Tab */}
+            {/* Header tab */}
             <div className="h-7 px-2.5 bg-[#2d2d2d] border-b border-[#3e3e42] flex items-center justify-between">
               <div className="flex items-center space-x-1.5 truncate">
                 <FileCode size={13} className="text-[#007acc] flex-shrink-0" />
@@ -484,34 +476,30 @@ export const InspectorPanel: React.FC = () => {
               </div>
 
               <div className="flex items-center space-x-1.5">
-                {/* View / Edit Mode Switcher */}
                 <div className="flex items-center bg-[#1e1e1e] p-0.5 rounded-[2px] border border-[#3e3e42] text-[10px] font-mono">
                   <button
                     onClick={() => setInlineEditMode(false)}
                     className={`px-1.5 py-0.2 rounded-[1px] micro-tap ${
                       !inlineEditMode ? 'bg-[#094771] text-white font-medium' : 'text-[#858585] hover:text-[#cccccc]'
                     }`}
-                    title="Read-only syntax preview"
+                    title="View snippet"
                   >
                     View
                   </button>
                   <button
                     onClick={() => {
                       setInlineEditMode(true);
-                      if (!inlineContent) {
-                        loadInlineContent();
-                      }
+                      if (!inlineContent) loadInlineContent();
                     }}
                     className={`px-1.5 py-0.2 rounded-[1px] micro-tap ${
                       inlineEditMode ? 'bg-[#094771] text-white font-medium' : 'text-[#858585] hover:text-[#cccccc]'
                     }`}
-                    title="Inline Code Editor"
+                    title="Edit source"
                   >
                     Edit
                   </button>
                 </div>
 
-                {/* Inline Save Button (Only in Edit mode) */}
                 {inlineEditMode && (
                   <button
                     onClick={handleSaveInline}
@@ -521,14 +509,13 @@ export const InspectorPanel: React.FC = () => {
                         ? 'bg-[#007acc] hover:bg-[#0098ff] text-white border-[#007acc]'
                         : 'bg-[#252526] text-[#6e7681] border-[#3e3e42] cursor-not-allowed'
                     }`}
-                    title="Save changes to disk (Ctrl+S)"
+                    title="Save (Ctrl+S)"
                   >
                     <Save size={11} />
                     <span>{isSavingInline ? '...' : 'Save'}</span>
                   </button>
                 )}
 
-                {/* Copy snippet button (Only in View mode) */}
                 {!inlineEditMode && (
                   <button
                     onClick={handleCopySource}
@@ -540,18 +527,17 @@ export const InspectorPanel: React.FC = () => {
                   </button>
                 )}
 
-                {/* Expand Full Editor Window */}
                 <button
                   onClick={() => setIsFullEditorOpen(true)}
                   className="p-1 text-[#858585] hover:text-[#ffffff] hover:bg-[#383838] rounded-[2px] micro-tap"
-                  title="Expand to Full Code Editor (Ctrl+S)"
+                  title="Expand Full Editor"
                 >
                   <Maximize2 size={12} />
                 </button>
               </div>
             </div>
 
-            {/* Syntax Error Alert if any */}
+            {/* Error banner */}
             {inlineEditMode && inlineSyntaxError && (
               <div className="px-2.5 py-1.5 bg-[#332020] border-b border-[#f14c4c]/40 text-[#f14c4c] flex items-center justify-between text-[10px] font-mono">
                 <span>
@@ -560,18 +546,18 @@ export const InspectorPanel: React.FC = () => {
               </div>
             )}
 
-            {/* Editor Body */}
+            {/* Editor body */}
             {inlineEditMode ? (
               <div className="bg-[#1e1e1e] flex flex-col h-72 font-mono text-[11px] relative">
                 {isLoadingInline ? (
                   <div className="flex-1 flex flex-col items-center justify-center gap-2 text-[#858585]">
                     <div className="w-4 h-4 border-2 border-[#007acc] border-t-transparent rounded-full animate-spin" />
-                    <span>Loading file for editing...</span>
+                    <span>Loading file...</span>
                   </div>
                 ) : (
                   <>
                     <div className="flex-1 flex overflow-hidden">
-                      {/* Left Line Number Gutter */}
+                      {/* Line gutter */}
                       <div
                         ref={inlineLineGutterRef}
                         className="w-9 bg-[#1e1e1e] border-r border-[#2d2d2d] py-2 text-right pr-2 select-none overflow-hidden text-[#555555] leading-[18px]"
@@ -596,31 +582,31 @@ export const InspectorPanel: React.FC = () => {
 
                     <div className="h-5 px-2 bg-[#252526] border-t border-[#3e3e42] flex items-center justify-between text-[9px] text-[#858585]">
                       <span>{isInlineDirty ? '● Unsaved Changes' : 'Saved'}</span>
-                      <span>Press Ctrl+S to save</span>
+                      <span>Ctrl+S to save</span>
                     </div>
                   </>
                 )}
               </div>
             ) : (
-              /* Read-only syntax highlighted viewer */
+              /* Viewer */
               <div className="bg-[#1e1e1e] p-2 max-h-72 overflow-auto code-scroll text-[11px] font-mono">
                 {isLoadingSource ? (
                   <div className="py-8 flex flex-col items-center justify-center gap-2 text-[#858585] font-mono text-xs">
                     <div className="w-4 h-4 border-2 border-[#007acc] border-t-transparent rounded-full animate-spin" />
-                    <span>Loading source snippet...</span>
+                    <span>Loading source...</span>
                   </div>
                 ) : sourceError ? (
                   <div className="py-4 px-3 bg-[#2b2020] border border-[#f14c4c]/40 rounded-[2px] text-center space-y-2">
                     <div className="text-[11px] text-[#f14c4c] font-semibold flex items-center justify-center gap-1.5">
                       <AlertCircle size={14} />
-                      <span>Source preview unavailable</span>
+                      <span>Preview unavailable</span>
                     </div>
                     <p className="text-[10px] text-[#858585]">{sourceError}</p>
                     <button
                       onClick={retrySourceSnippet}
                       className="px-2.5 py-1 bg-[#333333] hover:bg-[#3e3e42] text-[#cccccc] hover:text-[#ffffff] rounded-[2px] text-[10px] font-mono transition-colors"
                     >
-                      Retry Loading
+                      Retry
                     </button>
                   </div>
                 ) : sourceSnippet?.lines && sourceSnippet.lines.length > 0 ? (
@@ -670,7 +656,7 @@ export const InspectorPanel: React.FC = () => {
           </div>
         </div>
 
-        {/* Footer Info */}
+        {/* Footer */}
         <div className="h-8 px-3 border-t border-[#3e3e42] bg-[#2d2d2d] flex items-center justify-between text-[10px] font-mono text-[#858585]">
           <span className="truncate max-w-[140px]">Node: {selectedNode.id}</span>
           <div className="flex items-center space-x-3">
@@ -691,7 +677,7 @@ export const InspectorPanel: React.FC = () => {
         </div>
       </aside>
 
-      {/* Full Screen / Window Code Editor Modal */}
+      {/* Editor modal */}
       <CodeEditorModal
         isOpen={isFullEditorOpen}
         onClose={() => setIsFullEditorOpen(false)}

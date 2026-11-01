@@ -39,7 +39,7 @@ export const CodeEditorModal: React.FC<CodeEditorModalProps> = ({
 
   const isDirty = content !== originalContent;
 
-  // Load file content when opened
+  // Load file
   useEffect(() => {
     if (!isOpen || !filePath) return;
 
@@ -60,7 +60,7 @@ export const CodeEditorModal: React.FC<CodeEditorModalProps> = ({
       });
   }, [isOpen, filePath]);
 
-  // Jump to initial line once content loads
+  // Jump to line
   useEffect(() => {
     if (!isLoading && initialLine && textareaRef.current && content) {
       const lines = content.split('\n');
@@ -72,8 +72,7 @@ export const CodeEditorModal: React.FC<CodeEditorModalProps> = ({
       textareaRef.current.selectionEnd = charCount;
       textareaRef.current.focus();
 
-      // Scroll to line
-      const lineHeight = 19; // px
+      const lineHeight = 19;
       const scrollY = Math.max(0, (initialLine - 6) * lineHeight);
       textareaRef.current.scrollTop = scrollY;
       if (lineNumbersRef.current) {
@@ -82,14 +81,14 @@ export const CodeEditorModal: React.FC<CodeEditorModalProps> = ({
     }
   }, [isLoading, initialLine]);
 
-  // Sync scrolling between line numbers gutter and textarea
+  // Sync scroll
   const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
     if (lineNumbersRef.current) {
       lineNumbersRef.current.scrollTop = e.currentTarget.scrollTop;
     }
   };
 
-  // Track cursor line & col
+  // Cursor position
   const handleCursorActivity = () => {
     if (!textareaRef.current) return;
     const textBefore = content.substring(0, textareaRef.current.selectionStart);
@@ -100,7 +99,7 @@ export const CodeEditorModal: React.FC<CodeEditorModalProps> = ({
     });
   };
 
-  // Keyboard support: Tab indentation & Ctrl+S to save
+  // Keyboard
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
       e.preventDefault();
@@ -125,7 +124,7 @@ export const CodeEditorModal: React.FC<CodeEditorModalProps> = ({
     }
   };
 
-  // Save handler
+  // Save
   const handleSave = async () => {
     if (isSaving || !isDirty) return;
     setIsSaving(true);

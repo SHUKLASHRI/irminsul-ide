@@ -8,18 +8,15 @@ import type {
   RenameApplyResponse,
 } from '../types';
 
-// In dev with Vite proxy or production served by Flask, relative URL routes to Flask backend
 const BASE_URL = '';
 
+// HTTP helper
 async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 12000): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const res = await fetch(url, {
-      ...options,
-      signal: controller.signal,
-    });
+    const res = await fetch(url, { ...options, signal: controller.signal });
     clearTimeout(timeoutId);
     return res;
   } catch (err: any) {
@@ -27,12 +24,20 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
     if (err.name === 'AbortError') {
       throw new Error(`Request timed out after ${Math.round(timeoutMs / 1000)}s`);
     }
-    throw new Error(
-      err.message || 'Cannot connect to backend server. Ensure python app.py is running.'
-    );
+    throw new Error(err.message || 'Cannot connect to backend server. Ensure python app.py is running.');
   }
 }
 
+// JSON helper
+async function handleJson<T>(res: Response, fallback = 'Request failed'): Promise<T> {
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || `HTTP ${res.status}: ${fallback}`);
+  }
+  return res.json();
+}
+
+// Health
 export async function checkHealth(): Promise<boolean> {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/health`, {}, 4000);
@@ -43,72 +48,49 @@ export async function checkHealth(): Promise<boolean> {
   }
 }
 
-export async function analyzeProject(
-  projectPath: string,
-  forceRefresh = false
-): Promise<AnalyzeResponse> {
+// Analysis
+export async function analyzeProject(projectPath: string, forceRefresh = false): Promise<AnalyzeResponse> {
   const res = await fetchWithTimeout(`${BASE_URL}/analyze`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      project_path: projectPath,
-      refresh: forceRefresh,
-    }),
+    body: JSON.stringify({ project_path: projectPath, refresh: forceRefresh }),
   });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error || `HTTP ${res.status}: Failed to analyze project`);
-  }
-  return res.json();
+  return handleJson<AnalyzeResponse>(res, 'Failed to analyze project');
 }
 
+// Source snippet
 export async function fetchSourceSnippet(file: string, line: number): Promise<SourceResponse> {
-  const res = await fetchWithTimeout(
-    `${BASE_URL}/source?file=${encodeURIComponent(file)}&line=${line}`
-  );
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error || `HTTP ${res.status}: Could not load source snippet`);
-  }
-  return res.json();
+  const res = await fetchWithTimeout(`${BASE_URL}/source?file=${encodeURIComponent(file)}&line=${line}`);
+  return handleJson<SourceResponse>(res, 'Could not load source snippet');
 }
 
+// Circular dependencies
 export async function detectCircularDeps(projectPath: string): Promise<CircularDepsResponse> {
   const res = await fetchWithTimeout(`${BASE_URL}/analyze/circular-deps`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ project_path: projectPath }),
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error || `HTTP ${res.status}`);
-  }
-  return res.json();
+  return handleJson<CircularDepsResponse>(res, 'Failed to detect circular dependencies');
 }
 
+// Dead code
 export async function detectDeadCode(projectPath: string): Promise<DeadCodeResponse> {
   const res = await fetchWithTimeout(`${BASE_URL}/analyze/dead-code`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ project_path: projectPath }),
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error || `HTTP ${res.status}`);
-  }
-  return res.json();
+  return handleJson<DeadCodeResponse>(res, 'Failed to detect dead code');
 }
 
+// Impact
 export async function analyzeImpact(nodeId: string): Promise<ImpactResponse> {
   const res = await fetchWithTimeout(`${BASE_URL}/analyze/impact?node=${encodeURIComponent(nodeId)}`);
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error || `HTTP ${res.status}`);
-  }
-  return res.json();
+  return handleJson<ImpactResponse>(res, 'Failed to analyze impact');
 }
 
+// Rename preview
 export async function previewRename(
   projectPath: string,
   nodeId: string,
@@ -117,19 +99,12 @@ export async function previewRename(
   const res = await fetchWithTimeout(`${BASE_URL}/refactor/rename/preview`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      project_path: projectPath,
-      node_id: nodeId,
-      new_name: newName,
-    }),
+    body: JSON.stringify({ project_path: projectPath, node_id: nodeId, new_name: newName }),
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error || `HTTP ${res.status}`);
-  }
-  return res.json();
+  return handleJson<RenamePreviewResponse>(res, 'Failed to preview rename');
 }
 
+// Rename apply
 export async function applyRename(
   projectPath: string,
   nodeId: string,
@@ -138,19 +113,12 @@ export async function applyRename(
   const res = await fetchWithTimeout(`${BASE_URL}/refactor/rename/apply`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      project_path: projectPath,
-      node_id: nodeId,
-      new_name: newName,
-    }),
+    body: JSON.stringify({ project_path: projectPath, node_id: nodeId, new_name: newName }),
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error || `HTTP ${res.status}`);
-  }
-  return res.json();
+  return handleJson<RenameApplyResponse>(res, 'Failed to apply rename');
 }
 
+// File content types
 export interface FileContentResponse {
   file: string;
   filename: string;
@@ -171,15 +139,13 @@ export interface SaveFileResponse {
   };
 }
 
+// File content
 export async function fetchFileContent(file: string): Promise<FileContentResponse> {
   const res = await fetchWithTimeout(`${BASE_URL}/file/content?file=${encodeURIComponent(file)}`);
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error || `HTTP ${res.status}: Failed to load file`);
-  }
-  return res.json();
+  return handleJson<FileContentResponse>(res, 'Failed to load file');
 }
 
+// File save
 export async function saveFileContent(
   file: string,
   content: string,
@@ -188,20 +154,14 @@ export async function saveFileContent(
   const res = await fetchWithTimeout(`${BASE_URL}/file/save`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      file,
-      content,
-      project_path: projectPath || '',
-    }),
+    body: JSON.stringify({ file, content, project_path: projectPath || '' }),
   });
-
   const data = await res.json().catch(() => ({ error: res.statusText }));
-  if (!res.ok) {
-    throw data;
-  }
+  if (!res.ok) throw data;
   return data;
 }
 
+// Terminal types
 export interface TerminalRunResponse {
   stdout: string;
   stderr: string;
@@ -210,6 +170,7 @@ export interface TerminalRunResponse {
   error?: string;
 }
 
+// Terminal run
 export async function executeTerminalCommand(
   command: string,
   projectPath?: string
@@ -217,17 +178,9 @@ export async function executeTerminalCommand(
   const res = await fetchWithTimeout(`${BASE_URL}/terminal/run`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      command,
-      project_path: projectPath || '',
-    }),
+    body: JSON.stringify({ command, project_path: projectPath || '' }),
   }, 22000);
-
   const data = await res.json().catch(() => ({ error: res.statusText }));
-  if (!res.ok) {
-    throw data;
-  }
+  if (!res.ok) throw data;
   return data;
 }
-
-

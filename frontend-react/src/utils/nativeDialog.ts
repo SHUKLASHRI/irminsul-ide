@@ -1,10 +1,6 @@
-/**
- * Prompts the user with the native Windows Explorer folder selection dialog.
- * Works seamlessly across both the standalone native desktop app (pywebview)
- * and all web browsers by coordinating with the local backend dialog service.
- */
+// Native folder dialog
 export async function promptNativeFolderChooser(initialPath?: string): Promise<string | null> {
-  // 1. Native desktop window API (pywebview)
+  // Webview
   const pyApi = (window as any).pywebview?.api;
   if (pyApi) {
     if (typeof pyApi.choose_folder === 'function') {
@@ -25,7 +21,7 @@ export async function promptNativeFolderChooser(initialPath?: string): Promise<s
     }
   }
 
-  // 2. Backend native Windows Explorer dialog service
+  // Backend dialog
   try {
     const res = await fetch('/api/choose-folder', {
       method: 'POST',
